@@ -5,20 +5,20 @@ class LoginSerializer(serializers.Serializer):
     email=serializers.EmailField()
     password=serializers.CharField()
 
-class ColorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=Color
-        fields=["color_name"]
+# class ColorSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model=Color
+#         fields=["color_name"]
 class PeopleSerializer(serializers.ModelSerializer):
-    color=ColorSerializer()
-    color_info=serializers.SerializerMethodField()
+    # color=ColorSerializer()
+    # color_info=serializers.SerializerMethodField()
     class Meta:
         model = Person
         fields = '__all__'  #gets all the fields
         # depth=1
-    def get_color_info(self,obj):
-        color_obj=Color.objects.get(id=obj.color.id)
-        return {"color_name":color_obj.color_name,"hex_code":"#000"}
+    # def get_color_info(self,obj):
+    #     color_obj=Color.objects.get(id=obj.color.id)
+    #     return {"color_name":color_obj.color_name,"hex_code":"#000"}
 
     def validate_name(self,data):
         if not data.isalpha():
