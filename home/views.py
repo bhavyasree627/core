@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import PeopleSerializer
+from .serializers import PeopleSerializer,LoginSerializer
 from .models import Person
 @api_view(['GET','POST','PUT'])
 def index(request):
@@ -27,10 +27,22 @@ def index(request):
         print("You hit a PUT method")
         return Response(courses)
 
+@api_view(["POST"])
+def login(request):
+    data=request.data
+    serializer=LoginSerializer(data=data)
+
+    if serializer.is_valid():
+        data=serializer.validated_data
+        print(data)
+        return Response({"message":"success"})
+    return Response(serializer.errors)
+
+
 @api_view(['GET','POST','PUT','PATCH',"DELETE"])
 def person(request): 
     if request.method == "GET":
-        objs=Person.objects.all()
+        objs=Person.objects.filter(color__isnull=False)
         serializer = PeopleSerializer(objs, many = True)
         return Response(serializer.data)
     elif request.method == "POST":
