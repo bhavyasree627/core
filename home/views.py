@@ -1,11 +1,57 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import PeopleSerializer,LoginSerializer
+from .serializers import PeopleSerializer,LoginSerializer,RegisterSerializer
 from .models import Person
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework import status
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication, BasicAuthentication
+from django.core.paginator import Paginator
 
+
+
+class LoginAPI(APIView):
+
+    def post(self,request):
+        data=request.data
+        serializer=LoginSerializer(data=data)
+        if not serializer.is_valid():
+            return Response({
+                "status":False,
+                "message":serializer.errors,
+            },status.HTTP_400_BAD_REQUEST)
+
+        print(serializer.data)
+        user=authenticate(username=serializer.data['username'],password=serializer.data["password"])
+        if not user:
+            return Response({
+                "status":False,
+                "message":"user doesn't exist.",
+            },status.HTTP_400_BAD_REQUEST)
+
+        token, _ =Token.objects.get_or_create(user=user)
+        print(token)
+        return Response({"status":True,"message":"user_loggedIN","token":str(token)},status.HTTP_201_CREATED)
+
+
+class RegisterAPI(APIView):
+    def post(self,request):
+        data=request.data
+        serializer=RegisterSerializer(data=data)
+        if not serializer.is_valid():
+            return Response({
+                "status":False,
+                "message":serializer.errors,
+            },status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response({"status":True,"message":"user_created"},status.HTTP_201_CREATED)
+
+
+         
 
 @api_view(['GET','POST','PUT'])
 def index(request):
@@ -45,10 +91,23 @@ def login(request):
 
 
 class PersonAPI(APIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes=[TokenAuthentication]
     def get(self,request):
-        objs=Person.objects.filter(color__isnull=False)
-        serializer = PeopleSerializer(objs, many = True)
-        return Response(serializer.data)
+        try:
+            print(request.user)
+            objs=Person.objects.all()
+            page=request.GET.get('page',1)
+            page_size=2
+            paginator=Paginator(objs,page_size)
+            serializer = PeopleSerializer(paginator.page(page), many = True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({
+                "status" : False,
+                "message" : "Invalid page"
+            })
+
     def post(self,request):
         data=request.data
         serializer=PeopleSerializer(data=data)
