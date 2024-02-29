@@ -11,6 +11,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication, BasicAuthentication
 from django.core.paginator import Paginator
+from rest_framework.decorators import action
 
 
 
@@ -191,4 +192,13 @@ class PeopleViewSet(viewsets.ModelViewSet):
         serializer=PeopleSerializer(queryset, many = True)
         return Response({'status' : 200,"data":serializer.data},status=status.HTTP_200_OK)
 
+    @action(detail=True,methods=['POST'])
+    def  send_email_to_person(self,request,pk):
+        obj=Person.objects.get(pk=pk)
+        serializer=PeopleSerializer(obj)
+        return Response({
+            "status":True,
+            "message":"Email sent successfully",
+            "data":serializer.data
+        })
 
